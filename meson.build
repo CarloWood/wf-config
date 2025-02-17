@@ -35,9 +35,29 @@ sources = [
 
 wfconfig_inc = include_directories('include')
 
+libcwd_r_deps = dependency('libcwd_r', required: true)
+
+# cwds is a cmake project.
+cmake = import('cmake')
+opt_var = cmake.subproject_options()
+opt_var.add_cmake_defines({'CMAKE_BUILD_TYPE': 'Debug'})
+opt_var.add_cmake_defines({'CMAKE_VERBOSE_MAKEFILE': true})
+aicxx_proj = cmake.subproject('aicxx', options: opt_var)
+
+extra_deps = [
+  libcwd_r_deps,
+  dependency('libelf'),
+  dependency('libdw'),
+]
+
+aicxx_interface = declare_dependency(
+  compile_args: ['-include', 'sys.h'],
+  dependencies: [aicxx_proj.dependency('aicxx_headers'), extra_deps]
+)
+
 lib_wfconfig = library('wf-config',
     sources,
-    dependencies: [evdev, glm, libxml2],
+    dependencies: [aicxx_interface, evdev, glm, libxml2],
     include_directories: wfconfig_inc,
     install: true,
     version: meson.project_version(),
